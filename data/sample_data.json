@@ -1,0 +1,26 @@
+[
+    {
+        "title": "Постановление о финансовой поддержке малого бизнеса",
+        "content": "В соответствии с федеральным законом №123... малый бизнес может получить субсидии...",
+        "url": "https://economy.gov.ru/finance/support/post123",
+        "type_code": "03",
+        "category_code": "FIS",
+        "access_code": "A"
+    },
+    {
+        "title": "Статистика по ВВП за 2022 год",
+        "content": "Валовой внутренний продукт Российской Федерации в 2022 году составил...",
+        "url": "https://economy.gov.ru/statistics/gdp2022",
+        "type_code": "12",
+        "category_code": "STA",
+        "access_code": "A"
+    },
+    {
+        "title": "Методические рекомендации по экспорту",
+        "content": "Настоящие рекомендации разработаны для поддержки экспортно-ориентированных предприятий...",
+        "url": "https://economy.gov.ru/export/guidelines",
+        "type_code": "07",
+        "category_code": "LAW",
+        "access_code": "A"
+    }
+]

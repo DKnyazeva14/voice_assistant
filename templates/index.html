@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Голосовой помощник Минэкономразвития</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Голосовой помощник</h2>
+            <p>Министерство экономического развития</p>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message assistant">
+                <p>Привет! Я голосовой помощник для поиска по сайту Министерства экономического развития! Что Вы хотите найти?</p>
+            </div>
+        </div>
+        
+        <div class="voice-controls">
+            <button id="voiceButton" class="voice-btn">
+                <img src="/static/icons/mic_icon.svg" class="icon" alt="">
+                <span class="btn-text">Нажмите и говорите</span>
+            </button>
+            
+            <div class="voice-toggle">
+                <span>Включить озвучку текста?</span>
+                <div>
+                    <button class="toggle-btn active" data-value="true">Да</button>
+                    <button class="toggle-btn" data-value="false">Нет</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chatMessages');
+            const voiceButton = document.getElementById('voiceButton');
+            const toggleButtons = document.querySelectorAll('.toggle-btn');
+            let voiceEnabled = true;
+            let isRecording = false;
+            let mediaRecorder;
+            let audioChunks = [];
+            // Обработка переключения озвучки
+            toggleButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    toggleButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    voiceEnabled = this.dataset.value === 'true';
+                    fetch('/toggle_voice?enable=' + voiceEnabled, { method: 'GET' });
+                });
+            });
+            // Голосовой ввод
+            voiceButton.addEventListener('click', async function() {
+                if (!isRecording) {
+                    startRecording();
+                } 
+                else {
+                    stopRecording();
+                }
+            });
+            async function startRecording() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+                    mediaRecorder.onstop = processRecording;
+                    mediaRecorder.start();
+                    isRecording = true;
+                    voiceButton.classList.add('recording');
+                    voiceButton.querySelector('.btn-text').textContent = 'Остановить запись';
+                    addRecordingIndicator();
+                } 
+                catch (error) {
+                    console.error('Ошибка доступа к микрофону:', error);
+                    addErrorMessage('Не удалось получить доступ к микрофону');
+                }
+            }
+            
+            async function stopRecording() {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                voiceButton.classList.remove('recording');
+                voiceButton.querySelector('.btn-text').textContent = 'Нажмите и говорите';
+                removeRecordingIndicator();
+            }
+            async function processRecording() {
+                addProcessingMessage("Обработка запроса...");
+                try {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm; codecs=opus' });
+                    const formData = new FormData();
+                    formData.append('audio_data', audioBlob, 'recording.webm');
+                    const response = await fetch('/process_voice', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (!response.ok) throw new Error(await response.text());
+                    const data = await response.json();
+                    removeProcessingMessage();
+                    addAssistantMessage(data.text, data.document);
+                    if (voiceEnabled && data.text) {
+                        const utterance = new SpeechSynthesisUtterance(data.text);
+                        utterance.lang = 'ru-RU';
+                        speechSynthesis.speak(utterance);
+                    }
+                } 
+                catch (error) {
+                    console.error('Ошибка:', error);
+                    removeProcessingMessage();
+                    addErrorMessage('Ошибка обработки запроса');
+                }
+            }
+            
+            // Вспомогательные функции для работы с сообщениями
+            function addUserMessage(text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message user';
+                messageDiv.innerHTML = `<p>${escapeHtml(text)}</p>`;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function addAssistantMessage(text, document) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message assistant';
+                
+                let content = `<p>${escapeHtml(text)}</p>`;
+                if (document) {
+                    content += `<div class="document-link"><a href="${document.url}" target="_blank">Открыть документ: ${escapeHtml(document.title)}</a></div>`;
+                }
+                
+                messageDiv.innerHTML = content;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function addErrorMessage(text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message error';
+                messageDiv.innerHTML = `<p>${escapeHtml(text)}</p>`;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function addRecordingIndicator() {
+                const indicator = document.createElement('div');
+                indicator.id = 'recordingIndicator';
+                indicator.className = 'message info';
+                indicator.innerHTML = '<p>Идет запись... Говорите сейчас</p>';
+                chatMessages.appendChild(indicator);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function removeRecordingIndicator() {
+                const indicator = document.getElementById('recordingIndicator');
+                if (indicator) indicator.remove();
+            }
+            
+            function addProcessingMessage(text = "Обработка запроса...") {
+                const messageDiv = document.createElement('div');
+                messageDiv.id = 'processingMessage';
+                messageDiv.className = 'message info';
+                messageDiv.innerHTML = `<p>${escapeHtml(text)}</p>`;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function removeProcessingMessage() {
+                const message = document.getElementById('processingMessage');
+                if (message) message.remove();
+            }
+            
+            function escapeHtml(unsafe) {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+        });
+    </script>
+</body>
+</html>

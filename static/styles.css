@@ -1,0 +1,134 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.chat-container {
+    width: 100%;
+    max-width: 500px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.chat-header {
+    background: #1a5276;
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+}
+
+.chat-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.chat-header p {
+    margin: 5px 0 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.chat-messages {
+    padding: 20px;
+    height: 300px;
+    overflow-y: auto;
+    background: #f9f9f9;
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 12px 15px;
+    border-radius: 8px;
+    max-width: 80%;
+}
+
+.message.assistant {
+    background: #eaf2f8;
+    align-self: flex-start;
+}
+
+.voice-controls {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #eee;
+}
+
+.voice-btn {
+    background: #1a5276;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto;
+}
+
+.voice-btn .icon {
+    font-size: 1.2rem;
+}
+
+.voice-toggle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.toggle-btn {
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+    background: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.toggle-btn.active {
+    background: #1a5276;
+    color: white;
+    border-color: #1a5276;
+}
+/* Иконки */
+.icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+}
+
+/* Состояния кнопок */
+.voice-btn.recording .icon {
+    content: url('/static/icons/mic_active.svg');
+}
+
+.toggle-btn.active .icon {
+    content: url('/static/icons/speaker_on.svg');
+}
+
+.toggle-btn:not(.active) .icon {
+    content: url('/static/icons/speaker_off.svg');
+}
+.voice-btn.recording {
+    background-color: #e74c3c;
+}
+
+.voice-btn.recording .icon {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
